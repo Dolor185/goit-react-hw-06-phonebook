@@ -1,10 +1,17 @@
-import PropTypes from 'prop-types';
+import { nanoid } from 'nanoid';
+import { toast } from 'react-toastify';
 import { useState } from 'react';
 import { Form, Label, Input, Button } from './ContactForm.styled';
+import { useDispatch, useSelector } from 'react-redux';
+import { selectContacts } from 'redux/selectors';
+import { addContact } from 'redux/contactsSlice';
 
-export const ContactForm = ({ formSubmit, contactСomparison }) => {
+export const ContactForm = () => {
   const [name, setName] = useState('');
   const [number, setNumber] = useState('');
+
+  const dispatch = useDispatch();
+  const contacts = useSelector(selectContacts);
 
   const handleChange = e => {
     const { name, value } = e.currentTarget;
@@ -20,17 +27,30 @@ export const ContactForm = ({ formSubmit, contactСomparison }) => {
     }
   };
 
-  const onSubmit = e => {
+  const formSubmit = e => {
     e.preventDefault();
-    formSubmit(name, number);
-    if (!contactСomparison(name)) {
+    const contact = {
+      name,
+      number,
+      id: nanoid(),
+    };
+    if (contactСomparison(name)) {
+      toast.error(`${name} is already in contacts`);
+    } else {
+      dispatch(addContact(contact));
       setName('');
       setNumber('');
     }
   };
 
+  const contactСomparison = name => {
+    return contacts.find(contact =>
+      contact.name.toLowerCase().includes(name.toLowerCase())
+    );
+  };
+
   return (
-    <Form onSubmit={onSubmit}>
+    <Form onSubmit={formSubmit}>
       <Label>
         Name
         <Input
@@ -58,9 +78,4 @@ export const ContactForm = ({ formSubmit, contactСomparison }) => {
       <Button type="submit">Add contact</Button>
     </Form>
   );
-};
-
-ContactForm.propTypes = {
-  formSubmit: PropTypes.func.isRequired,
-  contactСomparison: PropTypes.func.isRequired,
 };
